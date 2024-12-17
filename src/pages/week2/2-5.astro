@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+  <head>
+    <script src="/lightgl.js" is:inline></script>
+    <script type="text/javascript" is:inline>
+      function draw() {
+        const gl = GL.create();
+
+        /**
+         * 等間隔の数列を生成する
+         * @param {number} start - 数列の開始値
+         * @param {number} stop - 数列の終了値
+         * @param {number} num - 数列の要素数
+         */
+        const linspace = (start, stop, num) => {
+          const step = (stop - start) / (num - 1);
+          return Array.from({ length: num }, (_, i) => start + step * i);
+        };
+
+        const r = 0.5;
+        const theta = linspace(0, 2 * Math.PI, 100);
+
+        const circleXY = theta.map((theta) => [
+          r * Math.cos(theta),
+          r * Math.sin(theta),
+        ]);
+
+        console.info({
+          circleXY,
+        });
+
+        gl.ondraw = function () {
+          // 背景を白でリセット
+          gl.clearColor(1.0, 1.0, 1.0, 1.0);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+
+          // 図形を奥方向(-z)に動かす
+          gl.translate(0.0, 0.0, -3.0);
+
+          // sinを描く
+          gl.color(1.0, 0.0, 0.0, 1.0); //色はyellow
+          gl.begin(gl.LINE_LOOP); // つながった線を描く
+          circleXY.forEach(([x, y]) => gl.vertex(x, y, 0.0));
+          gl.end();
+        };
+
+        gl.fullscreen();
+      }
+    </script>
+  </head>
+  <body onload="draw();">
+    <canvas id="glCanvas"></canvas>
+  </body>
+</html>

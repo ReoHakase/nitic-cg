@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <head>
+    <script src="/lightgl.js" is:inline></script>
+    <script type="text/javascript" is:inline>
+      function draw() {
+        const gl = GL.create();
+
+        gl.ondraw = function () {
+          // 背景を白でリセット
+          gl.clearColor(1.0, 1.0, 1.0, 1.0);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+
+          // 図形を奥方向(-z)に動かす
+          gl.translate(0.0, 0.0, -3.0);
+
+          //図形を描く
+          gl.color(1.0, 0.0, 0.0, 0.0); //色は赤
+          gl.begin(gl.TRIANGLES); //三角形を描く
+          gl.vertex(0.0, 1.0, 0.0); // 頂点1 (上)
+          gl.vertex(-1.0, -1.0, 0.0); // 頂点2 (左下)
+          gl.vertex(1.0, -1.0, 0.0); // 頂点3 (右下)
+          gl.end();
+        };
+
+        gl.fullscreen();
+      }
+    </script>
+  </head>
+  <body onload="draw();">
+    <canvas id="glCanvas"></canvas>
+  </body>
+</html>
