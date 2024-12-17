@@ -1,0 +1,54 @@
+<!doctype html>
+<!-- GitHubリポジトリ: https://github.com/ReoHakase/nitic-cg --><!-- プレビューURL: https://nitic-cg.reoiam.dev/week3/3-6 -->
+<html>
+  <head>
+    <script src="/lightgl.js" is:inline></script>
+    <script type="text/javascript" is:inline>
+      function draw() {
+        const gl = GL.create();
+
+        const translate = ([dx, dy, dz], [x, y, z]) => [x + dx, y + dy, z + dz];
+
+        const rotate = (deg, [x, y, z]) => {
+          const rad = (deg * Math.PI) / 180;
+          const cos = Math.cos(rad);
+          const sin = Math.sin(rad);
+          return [cos * x - sin * y, sin * x + cos * y, z];
+        };
+
+        const scale = ([sx, sy, sz], [x, y, z]) => [x * sx, y * sy, z * sz];
+
+        const vertex = (x, y, z) => {
+          gl.vertex(
+            ...scale(
+              [2.0, 1.0, 1.0],
+              rotate(90, translate([-0.5, 0.2, 0.0], [x, y, z]))
+            )
+          );
+        };
+
+        gl.ondraw = function () {
+          // 背景を白でリセット
+          gl.clearColor(1.0, 1.0, 1.0, 1.0);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+
+          // 図形を奥方向(-z)に動かす
+          gl.translate(0.0, 0.0, -3.0);
+
+          // 三角形を描く
+          gl.color(1.0, 0.0, 0.0, 1.0);
+          gl.begin(gl.TRIANGLES);
+          vertex(-0.3, -0.3, 0.0);
+          vertex(0.3, -0.3, 0.0);
+          vertex(0.0, 0.3, 0.0);
+          gl.end();
+        };
+
+        gl.fullscreen();
+      }
+    </script>
+  </head>
+  <body onload="draw();">
+    <canvas id="glCanvas"></canvas>
+  </body>
+</html>

@@ -1,0 +1,68 @@
+<!doctype html>
+<!-- GitHubリポジトリ: https://github.com/ReoHakase/nitic-cg --><!-- プレビューURL: https://nitic-cg.reoiam.dev/week3/3-7 -->
+<html>
+  <head>
+    <script src="/lightgl.js" is:inline></script>
+    <script type="text/javascript" is:inline>
+      function draw() {
+        const gl = GL.create();
+
+        const translate = ([dx, dy, dz], [x, y, z]) => [x + dx, y + dy, z + dz];
+
+        const rotate = (deg, [x, y, z]) => {
+          const rad = (deg * Math.PI) / 180;
+          const cos = Math.cos(rad);
+          const sin = Math.sin(rad);
+          return [cos * x - sin * y, sin * x + cos * y, z];
+        };
+
+        const scale = ([sx, sy, sz], [x, y, z]) => [x * sx, y * sy, z * sz];
+
+        /**
+         * x軸方向にdeg度剪断する
+         * @param {number} deg - 剪断角度
+         * @param {number[]} [x, y, z] - 3次元座標
+         */
+        const skew = (deg, [x, y, z]) => {
+          const rad = (deg * Math.PI) / 180;
+          const tan = Math.tan(rad);
+          return [x + y * tan, y, z];
+        };
+
+        const vertex = (x, y, z) => {
+          gl.vertex(
+            ...skew(
+              45,
+              scale(
+                [2.0, 1.0, 1.0],
+                rotate(90, translate([-0.5, 0.2, 0.0], [x, y, z]))
+              )
+            )
+          );
+        };
+
+        gl.ondraw = function () {
+          // 背景を白でリセット
+          gl.clearColor(1.0, 1.0, 1.0, 1.0);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+
+          // 図形を奥方向(-z)に動かす
+          gl.translate(0.0, 0.0, -3.0);
+
+          // 三角形を描く
+          gl.color(1.0, 0.0, 0.0, 1.0);
+          gl.begin(gl.TRIANGLES);
+          vertex(-0.3, -0.3, 0.0);
+          vertex(0.3, -0.3, 0.0);
+          vertex(0.0, 0.3, 0.0);
+          gl.end();
+        };
+
+        gl.fullscreen();
+      }
+    </script>
+  </head>
+  <body onload="draw();">
+    <canvas id="glCanvas"></canvas>
+  </body>
+</html>
