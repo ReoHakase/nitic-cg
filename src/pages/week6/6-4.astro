@@ -1,0 +1,136 @@
+<!doctype html>
+<!-- GitHubリポジトリ: https://github.com/ReoHakase/nitic-cg --><!-- プレビューURL: https://nitic-cg.reoiam.dev/week6/6-4 -->
+<html>
+  <head>
+    <script src="/lightgl.js" is:inline></script>
+    <script type="text/javascript" is:inline>
+      let gl; // WebGLコンテキスト
+      let data; // 読み込んだデータを格納する変数
+
+      // 1)ファイルの読み込み
+      function loadSTL(event) {
+        const file = event.target.files[0]; // 選択されたファイルを取得
+        if (file) {
+          if (!file.name.endsWith(".stl")) {
+            // STLファイルでない場合の警告
+            alert("Please select a valid STL file.");
+            return;
+          }
+          const reader = new FileReader(); // ファイルリーダーのインスタンスを作成
+          reader.onload = function (e) {
+            data = e.target.result; // 読み込んだデータを格納
+            draw(); // WebGLの描画を開始
+          };
+          reader.readAsText(file); // ファイルをテキストとして読み込む
+        }
+      }
+      // 2)STLデータのパース(STLデータを頂点座標の配列に変換)
+      function parseSTL(data) {
+        const surfaces = []; // 面の配列の初期化
+        let currentSurfaceVertices = []; // 現在の面の頂点配列
+        const lines = data.split("\n"); // データを行ごとに分割
+
+        for (let line of lines) {
+          line = line.trim(); // 行の前後の空白を削除
+          if (line.startsWith("vertex")) {
+            const parts = line.split(/\s+/); // 空白で分割
+            const x = parseFloat(parts[1]); // 文字列を実数に変換
+            const y = parseFloat(parts[2]);
+            const z = parseFloat(parts[3]);
+            currentSurfaceVertices.push([x, y, z]); // 頂点を配列に追加
+          } else if (line.startsWith("endfacet")) {
+            surfaces.push(currentSurfaceVertices); // 面を配列に追加
+            currentSurfaceVertices = []; // 頂点配列を初期化
+          }
+        }
+        return surfaces;
+      }
+
+      // 3)STLデータの描画
+      function drawSTLObj(surfaces) {
+        gl.pointSize(5.0);
+        surfaces.forEach((surface) => {
+          gl.begin(gl.LINE_LOOP);
+          surface.forEach((vertex) => {
+            gl.vertex(...vertex);
+          });
+          gl.end();
+        });
+      }
+
+      function draw_axis() {
+        gl.begin(gl.LINES); // x軸
+        gl.color(1.0, 0.0, 0.0, 1.0);
+        gl.vertex(0.0, 0.0, 0.0);
+        gl.vertex(1.0, 0.0, 0.0);
+        gl.end();
+        gl.begin(gl.LINES); // y軸
+        gl.color(0.0, 1.0, 0.0, 1.0);
+        gl.vertex(0.0, 0.0, 0.0);
+        gl.vertex(0.0, 1.0, 0.0);
+        gl.end();
+        gl.begin(gl.LINES); // z軸
+        gl.color(0.0, 0.5, 1.0, 1.0);
+        gl.vertex(0.0, 0.0, 0.0);
+        gl.vertex(0.0, 0.0, 1.0);
+        gl.end();
+      }
+
+      function draw() {
+        gl = GL.create();
+        gl.enable(gl.DEPTH_TEST);
+
+        let angleY = 0,
+          zoom = 0.5;
+        gl.onupdate = function (s) {
+          angleY += 50 * s;
+          if (GL.keys.Z) zoom += 0.01;
+          else if (GL.keys.X) zoom -= 0.01;
+        };
+
+        gl.matrixMode(gl.PROJECTION);
+        gl.loadIdentity();
+        gl.perspective(
+          45.0,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          100.0
+        );
+
+        gl.matrixMode(gl.MODELVIEW);
+        gl.loadIdentity();
+        gl.lookAt(2.0, 3.0, 6.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+
+        const surfaces = parseSTL(data); // 2)STLデータをパース
+
+        gl.ondraw = function () {
+          gl.clearColor(0.0, 0.0, 0.0, 1.0);
+          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+          gl.pushMatrix();
+          gl.rotate(angleY, 0.0, 1.0, 0.0);
+          gl.scale(zoom, zoom, zoom);
+
+          gl.pushMatrix();
+          draw_axis();
+          gl.popMatrix();
+
+          gl.pushMatrix();
+          gl.color(1.0, 1.0, 0.0, 1.0);
+          drawSTLObj(surfaces); // 3)STLデータの描画
+          gl.popMatrix();
+
+          gl.popMatrix();
+        };
+
+        gl.fullscreen();
+        gl.animate();
+      }
+    </script>
+  </head>
+  <body onload="draw();">
+    <input type="file" id="fileInput" accept=".stl" onchange="loadSTL(event)" />
+    <!-- 1)ファイルの入力 -->
+    <canvas id="glCanvas"></canvas>
+  </body>
+</html>
