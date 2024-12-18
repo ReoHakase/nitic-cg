@@ -1,0 +1,193 @@
+<!doctype html>
+<!-- GitHubリポジトリ: https://github.com/ReoHakase/nitic-cg --><!-- プレビューURL: https://nitic-cg.reoiam.dev/week4/4-8 -->
+<html>
+  <head>
+    <script src="/lightgl.js" is:inline></script>
+    <script type="text/javascript" is:inline>
+      let gl;
+
+      const LATITUDE_BANDS = 24;
+      const LONGITUDE_BANDS = 24;
+
+      function draw() {
+        let gl = GL.create(); // WebGLコンテキストの作成
+
+        /**
+         * 等間隔の数列を生成する
+         * @param {number} start - 数列の開始値
+         * @param {number} stop - 数列の終了値
+         * @param {number} num - 数列の要素数
+         */
+        const linspace = (start, stop, num) => {
+          const step = (stop - start) / (num - 1);
+          return Array.from({ length: num }, (_, i) => start + step * i);
+        };
+
+        /**
+         * 球を描く
+         * @param {number} r - 球の半径
+         * @param {number[]} [x, y, z] - 球の中心座標
+         */
+        const sphere = (r, [x, y, z]) => {
+          gl.pushMatrix();
+          gl.translate(x, y, z);
+          // 経線を描く
+          const lng = linspace(0, 2 * Math.PI, LONGITUDE_BANDS);
+          lng.forEach((lng) => {
+            const lngDeg = (lng * 180) / Math.PI;
+            const theta = linspace(0, 2 * Math.PI, LATITUDE_BANDS);
+            gl.pushMatrix();
+            gl.rotate(lngDeg, 0.0, 1.0, 0.0);
+            gl.begin(gl.LINE_LOOP);
+            theta.forEach((theta) => {
+              // xy平面上に原点中心, 半径rの円を描く
+              gl.vertex(r * Math.cos(theta), r * Math.sin(theta), 0.0);
+            });
+            gl.end();
+            gl.popMatrix();
+          });
+          // 緯線を描く
+          const lat = linspace(-Math.PI, Math.PI, LATITUDE_BANDS);
+          lat.forEach((lat) => {
+            const latDeg = (lat * 180) / Math.PI;
+            const theta = linspace(0, 2 * Math.PI, LONGITUDE_BANDS);
+            const latCirleY = Math.sin(lat) * r;
+            const latCircleR = Math.cos(lat) * r;
+            gl.pushMatrix();
+            gl.translate(0.0, latCirleY, 0.0);
+            gl.begin(gl.LINE_LOOP);
+            theta.forEach((theta) => {
+              // xz平面上に原点中心, 半径latCircleRの円を描く
+              gl.vertex(
+                latCircleR * Math.cos(theta),
+                0.0,
+                latCircleR * Math.sin(theta)
+              );
+            });
+            gl.end();
+            gl.popMatrix();
+          });
+          gl.popMatrix();
+        };
+
+        /**
+         * 正四角錐を描く
+         * @param {number} a - 底面の一辺の長さ
+         * @param {number} h - 高さ
+         */
+        const squarePyramid = (a, h) => {
+          gl.pushMatrix();
+          gl.translate(0.0, 0.0, 0.0);
+          gl.begin(gl.LINE_LOOP);
+          gl.vertex(-a / 2, 0.0, -a / 2);
+          gl.vertex(a / 2, 0.0, -a / 2);
+          gl.vertex(a / 2, 0.0, a / 2);
+          gl.vertex(-a / 2, 0.0, a / 2);
+          gl.end();
+          gl.begin(gl.LINES);
+          gl.vertex(-a / 2, 0.0, -a / 2);
+          gl.vertex(0.0, h, 0.0);
+          gl.vertex(a / 2, 0.0, -a / 2);
+          gl.vertex(0.0, h, 0.0);
+          gl.vertex(a / 2, 0.0, a / 2);
+          gl.vertex(0.0, h, 0.0);
+          gl.vertex(-a / 2, 0.0, a / 2);
+          gl.vertex(0.0, h, 0.0);
+          gl.end();
+          gl.popMatrix();
+        };
+
+        // ビューと投影の設定
+        gl.matrixMode(gl.PROJECTION);
+        gl.loadIdentity();
+        gl.perspective(
+          45.0,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          100.0
+        );
+
+        gl.matrixMode(gl.MODELVIEW);
+        gl.loadIdentity();
+        gl.lookAt(
+          ...[-1.0, 1.5, 3.0], // カメラ位置
+          ...[0.0, 0.0, 0.0], // 注視点
+          ...[0.0, 1.0, 0.0] // 上方向ベクトル
+        );
+
+        gl.ondraw = function () {
+          // 背景色を設定
+          gl.clearColor(0.0, 0.0, 0.0, 1.0); // 黒
+          gl.clear(gl.COLOR_BUFFER_BIT);
+
+          // X軸
+          gl.begin(gl.LINES);
+          gl.color(1.0, 0.0, 0.0, 1.0);
+          gl.vertex(0.0, 0.0, 0.0);
+          gl.vertex(1.0, 0.0, 0.0);
+          gl.end();
+          // Y軸
+          gl.begin(gl.LINES);
+          gl.color(0.0, 1.0, 0.0, 1.0);
+          gl.vertex(0.0, 0.0, 0.0);
+          gl.vertex(0.0, 1.0, 0.0);
+          gl.end();
+          // Z軸
+          gl.begin(gl.LINES);
+          gl.color(0.0, 0.5, 1.0, 1.0);
+          gl.vertex(0.0, 0.0, 0.0);
+          gl.vertex(0.0, 0.0, 1.0);
+          gl.end();
+
+          //立方体の描画
+          gl.pushMatrix();
+          gl.color(1.0, 1.0, 0.0, 1.0);
+          // 前面
+          gl.begin(gl.LINE_LOOP);
+          gl.vertex(-0.5, -0.5, 0.5);
+          gl.vertex(0.5, -0.5, 0.5);
+          gl.vertex(0.5, 0.5, 0.5);
+          gl.vertex(-0.5, 0.5, 0.5);
+          gl.end();
+          // 背面
+          gl.begin(gl.LINE_LOOP);
+          gl.vertex(-0.5, -0.5, -0.5);
+          gl.vertex(0.5, -0.5, -0.5);
+          gl.vertex(0.5, 0.5, -0.5);
+          gl.vertex(-0.5, 0.5, -0.5);
+          gl.end();
+          // 側面
+          gl.begin(gl.LINES);
+          gl.vertex(-0.5, -0.5, 0.5);
+          gl.vertex(-0.5, -0.5, -0.5);
+
+          gl.vertex(0.5, -0.5, 0.5);
+          gl.vertex(0.5, -0.5, -0.5);
+
+          gl.vertex(0.5, 0.5, 0.5);
+          gl.vertex(0.5, 0.5, -0.5);
+
+          gl.vertex(-0.5, 0.5, 0.5);
+          gl.vertex(-0.5, 0.5, -0.5);
+          gl.end();
+          gl.popMatrix();
+
+          gl.color(1.0, 1.0, 0.0, 1.0);
+          gl.pushMatrix();
+          gl.translate(1.2, 0.5, 0.0);
+          gl.rotate(180, 1.0, 0.0, 0.0);
+          squarePyramid(1.0, 1.0);
+          gl.popMatrix();
+
+          sphere(0.5, [-1.2, 0.0, 0.0]);
+        };
+
+        // フルスクリーンで描画
+        gl.fullscreen();
+      }
+    </script>
+  </head>
+  <body onload="draw();">
+    <canvas id="glCanvas"></canvas>
+  </body>
+</html>
