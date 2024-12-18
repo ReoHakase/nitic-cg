@@ -1,0 +1,144 @@
+<!doctype html>
+<!-- GitHubリポジトリ: https://github.com/ReoHakase/nitic-cg --><!-- プレビューURL: https://nitic-cg.reoiam.dev/week5/5-3 -->
+<html>
+  <head>
+    <script src="/lightgl.js" is:inline></script>
+    <script type="text/javascript" is:inline>
+      let gl; // WebGLコンテキスト
+
+      //立方体の描画を関数化
+      function drawCube() {
+        // 前面
+        gl.begin(gl.TRIANGLE_FAN);
+        gl.color(1.0, 1.0, 0.0, 1.0);
+        gl.vertex(-0.5, -0.5, 0.5);
+        gl.vertex(0.5, -0.5, 0.5);
+        gl.vertex(0.5, 0.5, 0.5);
+        gl.vertex(-0.5, 0.5, 0.5);
+        gl.end();
+        // 背面
+        gl.begin(gl.TRIANGLE_FAN);
+        gl.color(1.0, 0.0, 1.0, 1.0);
+        gl.vertex(-0.5, -0.5, -0.5);
+        gl.vertex(0.5, -0.5, -0.5);
+        gl.vertex(0.5, 0.5, -0.5);
+        gl.vertex(-0.5, 0.5, -0.5);
+        gl.end();
+        // 側面 (上)
+        gl.begin(gl.TRIANGLE_FAN);
+        gl.color(0.0, 1.0, 1.0, 1.0);
+        gl.vertex(-0.5, 0.5, 0.5);
+        gl.vertex(0.5, 0.5, 0.5);
+        gl.vertex(0.5, 0.5, -0.5);
+        gl.vertex(-0.5, 0.5, -0.5);
+        gl.end();
+        // 側面 (下)
+        gl.begin(gl.TRIANGLE_FAN);
+        gl.color(1.0, 0.0, 0.0, 1.0);
+        gl.vertex(-0.5, -0.5, 0.5);
+        gl.vertex(0.5, -0.5, 0.5);
+        gl.vertex(0.5, -0.5, -0.5);
+        gl.vertex(-0.5, -0.5, -0.5);
+        gl.end();
+        // 側面 (左)
+        gl.begin(gl.TRIANGLE_FAN);
+        gl.color(0.0, 1.0, 0.0, 1.0);
+        gl.vertex(-0.5, -0.5, 0.5);
+        gl.vertex(-0.5, 0.5, 0.5);
+        gl.vertex(-0.5, 0.5, -0.5);
+        gl.vertex(-0.5, -0.5, -0.5);
+        gl.end();
+        // 側面 (右)
+        gl.begin(gl.TRIANGLE_FAN);
+        gl.color(0.0, 0.0, 1.0, 1.0);
+        gl.vertex(0.5, -0.5, 0.5);
+        gl.vertex(0.5, 0.5, 0.5);
+        gl.vertex(0.5, 0.5, -0.5);
+        gl.vertex(0.5, -0.5, -0.5);
+        gl.end();
+      }
+
+      function draw_axis() {
+        // X軸
+        gl.begin(gl.LINES);
+        gl.color(1.0, 0.0, 0.0, 1.0);
+        gl.vertex(0.0, 0.0, 0.0);
+        gl.vertex(1.0, 0.0, 0.0);
+        gl.end();
+        // Y軸
+        gl.begin(gl.LINES);
+        gl.color(0.0, 1.0, 0.0, 1.0);
+        gl.vertex(0.0, 0.0, 0.0);
+        gl.vertex(0.0, 1.0, 0.0);
+        gl.end();
+        // Z軸
+        gl.begin(gl.LINES);
+        gl.color(0.0, 0.5, 1.0, 1.0);
+        gl.vertex(0.0, 0.0, 0.0);
+        gl.vertex(0.0, 0.0, 1.0);
+        gl.end();
+      }
+
+      function draw() {
+        gl = GL.create(); // WebGLコンテキストの作成
+
+        let angle = 0;
+        gl.onupdate = function (s) {
+          angle += 50 * s;
+        };
+
+        // ビューと投影の設定
+        gl.matrixMode(gl.PROJECTION);
+        gl.loadIdentity();
+        gl.perspective(
+          45.0,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          100.0
+        );
+
+        gl.matrixMode(gl.MODELVIEW);
+        gl.loadIdentity();
+        gl.lookAt(
+          1.0,
+          1.5,
+          3.0, // カメラ位置
+          0.0,
+          0.0,
+          0.0, // 注視点
+          0.0,
+          1.0,
+          0.0
+        ); // 上方向ベクトル
+
+        gl.ondraw = function () {
+          // 背景色を設定
+          gl.clearColor(0.0, 0.0, 0.0, 1.0); // 黒
+          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+          gl.pushMatrix();
+          gl.rotate(angle, 0.0, 1.0, 0.0);
+
+          gl.pushMatrix();
+          draw_axis();
+          gl.popMatrix();
+
+          //立方体の描画（関数の呼び出し）
+          gl.pushMatrix();
+          drawCube();
+          gl.popMatrix();
+
+          gl.popMatrix();
+        };
+
+        gl.fullscreen(); // 表示画面全体を指定して
+        gl.animate(); // アニメーション表示のためのループ処理
+        // ループ処理はonupdateとondrawを併せて
+        gl.enable(gl.DEPTH_TEST);
+      }
+    </script>
+  </head>
+  <body onload="draw();">
+    <canvas id="glCanvas"></canvas>
+  </body>
+</html>

@@ -1,0 +1,184 @@
+<!doctype html>
+<!-- GitHubリポジトリ: https://github.com/ReoHakase/nitic-cg --><!-- プレビューURL: https://nitic-cg.reoiam.dev/week5/5-8 -->
+<html>
+  <head>
+    <script src="/lightgl.js" is:inline></script>
+    <script type="text/javascript" is:inline>
+      // obj[][0]: 図形の色，obj[][1]:図形の頂点座標
+      obj = [
+        [
+          [0.0, 1.0, 0.0],
+          [
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [1.0, 1.0, 0.0],
+          ],
+        ],
+        [
+          [0.0, 1.0, 0.0],
+          [
+            [1.0, 1.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0],
+          ],
+        ],
+        [
+          [1.0, 0.0, 0.0],
+          [
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0],
+            [0.0, 1.0, 1.0],
+          ],
+        ],
+        [
+          [1.0, 0.0, 0.0],
+          [
+            [0.0, 1.0, 1.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0],
+          ],
+        ],
+        -1,
+      ];
+
+      const CIRCLE_BANDS = 24; // 緯線の分割数
+
+      function draw() {
+        const gl = GL.create();
+        let angleX = 30.0,
+          angleY = 45.0; // X軸周り, Y軸周りの回転角度
+        let zoom = 0.5; // 拡大縮小用の係数
+        let isFirstBoosterDetached = false;
+        let firstBoosterY = 0.0;
+        let firstBoosterYVelocity = 0.0;
+
+        /**
+         * 等間隔の数列を生成する
+         * @param {number} start - 数列の開始値
+         * @param {number} stop - 数列の終了値
+         * @param {number} num - 数列の要素数
+         */
+        const linspace = (start, stop, num) => {
+          const step = (stop - start) / (num - 1);
+          return Array.from({ length: num }, (_, i) => start + step * i);
+        };
+
+        const cylinder = (r, h, [x, y, z]) => {
+          gl.pushMatrix();
+          gl.translate(x, y, z);
+          const theta = linspace(0, 2 * Math.PI, CIRCLE_BANDS);
+          gl.begin(gl.LINE_LOOP);
+          theta.forEach((theta) => {
+            gl.vertex(r * Math.cos(theta), 0.0, r * Math.sin(theta));
+          });
+          gl.end();
+          gl.begin(gl.LINE_LOOP);
+          theta.forEach((theta) => {
+            gl.vertex(r * Math.cos(theta), h, r * Math.sin(theta));
+          });
+          gl.end();
+          gl.begin(gl.LINES);
+          theta.forEach((theta) => {
+            gl.vertex(r * Math.cos(theta), 0.0, r * Math.sin(theta));
+            gl.vertex(r * Math.cos(theta), h, r * Math.sin(theta));
+          });
+          gl.end();
+          gl.popMatrix();
+        };
+
+        const cone = (r, h, [x, y, z]) => {
+          gl.pushMatrix();
+          gl.translate(x, y, z);
+          const theta = linspace(0, 2 * Math.PI, CIRCLE_BANDS);
+          gl.begin(gl.LINE_LOOP);
+          theta.forEach((theta) => {
+            gl.vertex(r * Math.cos(theta), 0.0, r * Math.sin(theta));
+          });
+          gl.end();
+          gl.begin(gl.LINES);
+          theta.forEach((theta) => {
+            gl.vertex(r * Math.cos(theta), 0.0, r * Math.sin(theta));
+            gl.vertex(0.0, h, 0.0);
+          });
+          gl.end();
+          gl.popMatrix();
+        };
+
+        gl.onupdate = function (s) {
+          firstBoosterY += firstBoosterYVelocity * s;
+          if (isFirstBoosterDetached) {
+            firstBoosterYVelocity -= 0.1 * 9.8 * s;
+          }
+          angleY += 50 * s; // 図形をY軸周りに回転
+          if (GL.keys.D) {
+            isFirstBoosterDetached = true;
+          }
+          if (GL.keys.Z)
+            zoom += 0.01; // Zキーで拡大
+          else if (GL.keys.X) zoom -= 0.01; // Xキーで縮小
+          if (GL.keys.LEFT) {
+            angleY += 50 * s;
+          } else if (GL.keys.RIGHT) {
+            angleY -= 100 * s;
+          }
+          if (GL.keys.UP) {
+            angleX += 50 * s;
+          } else if (GL.keys.DOWN) {
+            angleX -= 50 * s;
+          }
+        };
+
+        gl.onmousemove = function (e) {
+          // マウスの移動イベントを処理
+          if (e.dragging && GL.keys.SHIFT) {
+            // Z キーを押しながらドラッグで True
+            angleX += e.deltaY; // マウスの縦移動量は X 軸回転角度に
+            angleY += e.deltaX; // マウスの横移動量は Y 軸回転角度に
+            gl.ondraw(); // 再描画
+          }
+        };
+
+        gl.ondraw = function () {
+          gl.clearColor(0.0, 0.0, 0.0, 1.0);
+          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+          gl.loadIdentity();
+          gl.translate(0.0, 0.0, -5.0);
+          gl.rotate(angleX, 1.0, 0.0, 0.0); // X軸周りの回転
+          gl.rotate(angleY, 0.0, 1.0, 0.0); // Y軸周りの回転
+          gl.scale(zoom, zoom, zoom); // スケール係数の適用
+
+          // 図形の描画
+          gl.pushMatrix();
+          gl.translate(0.0, -2.5, 0.0);
+          gl.color(1.0, 1.0, 0.0, 1.0);
+
+          // ロケットの1段目
+          gl.pushMatrix();
+          gl.translate(0.0, firstBoosterY, 0.0);
+          linspace(0, 2 * Math.PI, 4).forEach((theta) => {
+            gl.pushMatrix();
+            gl.rotate(theta * (180 / Math.PI), 0.0, 1.0, 0.0);
+            cylinder(0.3, 2.0, [0.9, -1.0, 0.0]);
+            gl.popMatrix();
+          });
+          cylinder(1.0, 2.0, [0.0, 0.0, 0.0]);
+          gl.popMatrix();
+
+          // ロケットの2段目
+          cylinder(1.0, 2.0, [0.0, 2.0, 0.0]);
+          // ロケットの3段目
+          cone(1.0, 2.0, [0.0, 4.0, 0.0]);
+          gl.popMatrix();
+        };
+
+        gl.fullscreen();
+        gl.animate();
+        gl.enable(gl.DEPTH_TEST);
+      }
+    </script>
+  </head>
+  <body onload="draw();">
+    <canvas id="glCanvas"></canvas>
+  </body>
+</html>

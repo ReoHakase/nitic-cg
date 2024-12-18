@@ -1,0 +1,113 @@
+<!doctype html>
+<!-- GitHubリポジトリ: https://github.com/ReoHakase/nitic-cg --><!-- プレビューURL: https://nitic-cg.reoiam.dev/week5/5-6 -->
+<html>
+  <head>
+    <script src="/lightgl.js" is:inline></script>
+    <script type="text/javascript" is:inline>
+      // obj[][0]: 図形の色，obj[][1]:図形の頂点座標
+      obj = [
+        [
+          [0.0, 1.0, 0.0],
+          [
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [1.0, 1.0, 0.0],
+          ],
+        ],
+        [
+          [0.0, 1.0, 0.0],
+          [
+            [1.0, 1.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0],
+          ],
+        ],
+        [
+          [1.0, 0.0, 0.0],
+          [
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0],
+            [0.0, 1.0, 1.0],
+          ],
+        ],
+        [
+          [1.0, 0.0, 0.0],
+          [
+            [0.0, 1.0, 1.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0],
+          ],
+        ],
+        -1,
+      ];
+
+      function draw() {
+        const gl = GL.create();
+        let angleX = 30.0,
+          angleY = 45.0; // X軸周り, Y軸周りの回転角度
+        let zoom = 1.0; // 拡大縮小用の係数
+
+        gl.onupdate = function (s) {
+          angleY += 50 * s; // 図形をY軸周りに回転
+          if (GL.keys.Z)
+            zoom += 0.01; // Zキーで拡大
+          else if (GL.keys.X) zoom -= 0.01; // Xキーで縮小
+          if (GL.keys.LEFT) {
+            angleY += 50 * s;
+          } else if (GL.keys.RIGHT) {
+            angleY -= 100 * s;
+          }
+          if (GL.keys.UP) {
+            angleX += 50 * s;
+          } else if (GL.keys.DOWN) {
+            angleX -= 50 * s;
+          }
+        };
+
+        gl.onmousemove = function (e) {
+          // マウスの移動イベントを処理
+          if (e.dragging && GL.keys.SHIFT) {
+            // Z キーを押しながらドラッグで True
+            angleX += e.deltaY; // マウスの縦移動量は X 軸回転角度に
+            angleY += e.deltaX; // マウスの横移動量は Y 軸回転角度に
+            gl.ondraw(); // 再描画
+          }
+        };
+
+        gl.ondraw = function () {
+          gl.clearColor(1.0, 1.0, 1.0, 1.0);
+          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+          gl.loadIdentity();
+          gl.translate(0.0, 0.0, -5.0);
+          gl.rotate(angleX, 1.0, 0.0, 0.0); // X軸周りの回転
+          gl.rotate(angleY, 0.0, 1.0, 0.0); // Y軸周りの回転
+          gl.scale(zoom, zoom, zoom); // スケール係数の適用
+
+          // 図形の描画
+          let i = 0,
+            t,
+            c,
+            vs;
+          gl.begin(gl.TRIANGLES);
+          while (obj[i] != -1) {
+            t = obj[i];
+            c = t[0];
+            gl.color(c[0], c[1], c[2]);
+            vs = t[1];
+            for (j = 0; j < 3; j++) gl.vertex(vs[j][0], vs[j][1], vs[j][2]);
+            i++;
+          }
+          gl.end();
+        };
+
+        gl.fullscreen();
+        gl.animate();
+        gl.enable(gl.DEPTH_TEST);
+      }
+    </script>
+  </head>
+  <body onload="draw();">
+    <canvas id="glCanvas"></canvas>
+  </body>
+</html>
